@@ -22,30 +22,60 @@ interface Transaction {
 export default function Home() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [monthlySummary, setMonthlySummary] = useState<{ [key: string]: { income: number; expense: number } }>({});
 
   useEffect(() => {
     fetch("/api/bookings/get-all")
       .then((res) => res.json())
       .then((data) => {
-        console.log("Bookings Response:", data); // Debugging
         if (Array.isArray(data)) {
           setBookings(data.slice(0, 5));
-        } else {
-          console.error("API tidak mengembalikan array:", data);
-        }
-      });
-
-    fetch("/api/finance/get-all")
-      .then((res) => res.json())
-      .then((data) => {
-        console.log("Finance Response:", data); // Debugging
-        if (Array.isArray(data)) {
-          setTransactions(data.slice(0, 5));
+  
+          // Buat rekapitulasi bulanan dari bookings
+          const summary: { [key: string]: { income: number; expense: number } } = {};
+          data.forEach((booking: Booking) => {
+            const monthYear = new Date(booking.date).toLocaleDateString("id-ID", { month: "long", year: "numeric" });
+  
+            if (!summary[monthYear]) {
+              summary[monthYear] = { income: 0, expense: 0 };
+            }
+  
+            if (booking.status === "Confirmed" || booking.status === "Done") {
+              summary[monthYear].income += booking.price;
+            } else if (booking.status === "Canceled") {
+              summary[monthYear].expense += booking.price;
+            }
+          });
+  
+          setMonthlySummary(summary);
         } else {
           console.error("API tidak mengembalikan array:", data);
         }
       });
   }, []);
+  
+
+  // 🔥 **Fungsi untuk menghitung rekap bulanan**
+  const processMonthlySummary = (data: Transaction[]) => {
+    const summary: { [key: string]: { income: number; expense: number } } = {};
+
+    data.forEach((transaction) => {
+      const date = new Date(transaction.date);
+      const monthKey = date.toLocaleDateString("id-ID", { month: "long", year: "numeric" }); // Format: "Maret 2025"
+
+      if (!summary[monthKey]) {
+        summary[monthKey] = { income: 0, expense: 0 };
+      }
+
+      if (transaction.type === "income") {
+        summary[monthKey].income += transaction.amount;
+      } else {
+        summary[monthKey].expense += transaction.amount;
+      }
+    });
+
+    setMonthlySummary(summary);
+  };
 
   return (
     <div className="container mx-auto p-4">
@@ -78,7 +108,7 @@ export default function Home() {
                     {booking.time}
                   </span>
                   <span className="text-black">
-                  ⏳ {booking.duration} jam | 💰 Rp{booking.price.toLocaleString("id-ID")}
+                    ⏳ {booking.duration} jam | 💰 Rp{booking.price.toLocaleString("id-ID")}
                   </span>
                   <span
                     className={`ml-2 px-2 py-1 text-sm rounded ${
@@ -101,29 +131,26 @@ export default function Home() {
           </ul>
         </div>
 
-        {/* Manajemen Keuangan */}
+        {/* 📅 Rekapitulasi Keuangan Bulanan */}
         <div className="bg-white p-4 rounded-lg shadow">
-          <h2 className="text-xl font-semibold text-black mb-2">💰 Transaksi Keuangan</h2>
-          <ul>
-            {transactions.length > 0 ? (
-              transactions.map((transaction) => (
-                <li key={transaction.id} className="p-2 border-b">
-                  <span className="font-bold text-black">{transaction.description}</span> - Rp
-                  {transaction.amount.toLocaleString()}
-                  <span
-                    className={`ml-2 px-2 py-1 text-sm rounded ${
-                      transaction.type === "income" ? "bg-green-500 text-white" : "bg-red-500 text-white"
-                    }`}
-                  >
-                    {transaction.type === "income" ? "Pemasukan" : "Pengeluaran"}
-                  </span>
-                </li>
-              ))
-            ) : (
-              <p className="text-gray-500">Belum ada transaksi</p>
-            )}
-          </ul>
-        </div>
+  <h2 className="text-xl font-semibold text-black mb-2">📅 Rekapitulasi Keuangan Bulanan</h2>
+  <ul>
+    {Object.entries(monthlySummary).length > 0 ? (
+      Object.entries(monthlySummary).map(([month, { income, expense }]) => (
+        <li key={month} className="p-2 border-b">
+          <span className="font-bold text-black">{month}</span> <br />
+          ✅ <span className="text-black">Total Pemasukan</span>: 
+          <span className="text-green-500"> Rp{income.toLocaleString("id-ID")}</span> <br />
+          ❌ <span className="text-black">Total Pembatalan </span>: 
+          <span className="text-red-500"> Rp{expense.toLocaleString("id-ID")}</span>
+        </li>
+      ))
+    ) : (
+      <p className="text-gray-500">Belum ada data keuangan</p>
+    )}
+  </ul>
+</div>
+
       </div>
     </div>
   );
