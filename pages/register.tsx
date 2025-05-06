@@ -32,7 +32,7 @@ export default function Register() {
   return (
     <div
       className="min-h-screen flex items-center justify-center bg-cover bg-center"
-      style={{ backgroundImage: "url('/futsal.jpg')" }}
+      style={{ backgroundImage: "url('/bg1.jpg')" }}
     >
       <div className="bg-white/30 backdrop-blur-lg p-8 rounded-lg shadow-lg w-full max-w-md">
         <h2 className="text-2xl font-bold mb-4 text-white text-center">Register</h2>

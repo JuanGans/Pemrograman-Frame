@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
-import { Eye, EyeOff } from "lucide-react"; // pastikan lucide-react sudah diinstall
+import { Eye, EyeOff, Home } from "lucide-react";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -22,7 +22,7 @@ export default function Login() {
     const data = await res.json();
     if (res.ok) {
       localStorage.setItem("token", data.token);
-      router.push("/");
+      router.push("/dashboard");
     } else {
       setError(data.message || "Gagal login");
     }
@@ -31,9 +31,18 @@ export default function Login() {
   return (
     <div
       className="min-h-screen flex items-center justify-center bg-cover bg-center font-sans"
-      style={{ backgroundImage: `url('/futsal.jpg')` }}
+      style={{ backgroundImage: `url('/bg1.jpg')` }}
     >
-      <div className="w-full max-w-md bg-white/30 backdrop-blur-lg shadow-lg rounded-lg p-10">
+      <div className="w-full max-w-md bg-white/30 backdrop-blur-lg shadow-lg rounded-lg p-10 relative">
+        {/* Tombol Home */}
+        <button
+          onClick={() => router.push("/")}
+          className="absolute top-4 left-4 text-blue-900 hover:text-blue-700 transition"
+          title="Kembali ke Beranda"
+        >
+          <Home size={24} />
+        </button>
+
         <h2 className="text-2xl font-bold text-center text-blue-900 mb-8">Masuk</h2>
         <form className="space-y-4" onSubmit={handleLogin}>
           {error && <p className="text-red-500 text-sm">{error}</p>}
@@ -72,7 +81,7 @@ export default function Login() {
           </div>
 
           <div className="flex items-center justify-between text-sm text-gray-100">
-            <a href="#" className="text-blue-300 hover:underline">Lupa Password</a>
+            <a href="/lupa-password" className="text-blue-300 hover:underline">Lupa Password</a>
           </div>
 
           <button
